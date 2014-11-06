@@ -62,7 +62,7 @@ def tweet_it(string, credentials):
         credentials['consumer_key'],
         credentials['consumer_secret']))
 
-    print("TWEETING THIS:\n", string)
+    print("TWEETING THIS:", string)
 
     if args.test:
         print("(Test mode, not actually tweeting)")
@@ -73,18 +73,18 @@ def tweet_it(string, credentials):
             display_coordinates=True)
         url = "http://twitter.com/" + \
             result['user']['screen_name'] + "/status/" + result['id_str']
-        print("Tweeted:\n" + url)
+        print("Tweeted: " + url)
         if not args.no_web:
             webbrowser.open(url, new=2)  # 2 = open in a new tab, if possible
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Scraper to tweet the population of Finland",
+        description="Tweet every Finnish number.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument(
         '-y', '--yaml',
-        default='M:/bin/data/everyfinnishno.yaml',
+        default='C:/Users/hugovk/bin/data/everyfinnishno.yaml',
         help="YAML file location containing Twitter keys and secrets")
     parser.add_argument(
         '-nw', '--no-web', action='store_true',
@@ -98,7 +98,7 @@ if __name__ == "__main__":
 
     tweet = build_tweet(data['last_number'])
 
-    print("Tweet this:\n", tweet)
+    # print("Tweet this:\n", tweet)
     tweet_it(tweet, data)
 
     data['last_number'] += 1
