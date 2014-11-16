@@ -5,6 +5,7 @@ Tweet every Finnish number.
 """
 from __future__ import print_function, unicode_literals
 import argparse
+import fino
 import sys
 import twitter
 import webbrowser
@@ -21,7 +22,7 @@ def load_yaml(filename):
     consumer_secret: TODO_ENTER_YOURS
     oauth_token: TODO_ENTER_YOURS
     oauth_token_secret: TODO_ENTER_YOURS
-    If it contains last_number, don't change it
+    If it contains last_number or last_mention_id, don't change it
     """
     f = open(filename)
     data = yaml.safe_load(f)
@@ -34,6 +35,9 @@ def load_yaml(filename):
     if 'last_number' not in data:
         data['last_number'] = 0
 
+    if 'last_mention_id' not in data:
+        data['last_mention_id'] = 1
+
     return data
 
 
@@ -42,13 +46,20 @@ def save_yaml(filename, data):
         yaml_file.write(yaml.safe_dump(data, default_flow_style=False))
 
 
-def build_tweet(number):
-    import fino
-    tweet = str(number) + " " + fino.to_finnish(number)
+def build_tweet(number, reply_to=None):
+    tweet = ""
+    if reply_to:
+        tweet += "@" + reply_to + " "
+    tweet += str(number) + " " + fino.to_finnish(number)
+
+    # Truncate?
+    if len(tweet) > 140:
+        tweet = tweet[:139] + "…"
+
     return tweet
 
 
-def tweet_it(string, credentials):
+def tweet_it(string, credentials, in_reply_to_status_id=None):
     if len(string) <= 0:
         print("ERROR: trying to tweet an empty tweet!")
         return
@@ -70,12 +81,57 @@ def tweet_it(string, credentials):
         result = t.statuses.update(
             status=string,
             lat=HELSINKI_LAT, long=HELSINKI_LONG,
-            display_coordinates=True)
+            display_coordinates=True,
+            in_reply_to_status_id=in_reply_to_status_id)
         url = "http://twitter.com/" + \
             result['user']['screen_name'] + "/status/" + result['id_str']
         print("Tweeted: " + url)
         if not args.no_web:
             webbrowser.open(url, new=2)  # 2 = open in a new tab, if possible
+
+
+def check_replies(credentials):
+    print("Check replies...")
+#     TODO remove duplicate
+    t = twitter.Twitter(auth=twitter.OAuth(
+        credentials['oauth_token'],
+        credentials['oauth_token_secret'],
+        credentials['consumer_key'],
+        credentials['consumer_secret']))
+
+    mentions = t.statuses.mentions_timeline(since_id=credentials[
+                                            'last_mention_id'])
+    for i, m in enumerate(reversed(mentions)):
+        print("*"*80)
+        print(i)
+        print("text:", m['text'])
+        print("in_reply_to_screen_name:", m['in_reply_to_screen_name'])
+        print("screen_name:", m['user']['screen_name'])
+        print("ID:", m['id'])
+        number = extract_number_from_tweet(m['text'])
+        print("Found a number:", number)
+        if number:
+            tweet = build_tweet(number, reply_to=m['user']['screen_name'])
+            print(tweet)
+            tweet_it(tweet, data, in_reply_to_status_id=m['id'])
+
+        data['last_mention_id'] = m['id']
+        print("Save last mention ID for next time:", data['last_mention_id'])
+
+        if not args.test:
+            save_yaml(args.yaml, data)
+
+
+def extract_number_from_tweet(text):
+    # Remove commas
+    text = text.replace(",", "").rstrip("?")
+
+    # http://stackoverflow.com/a/4289557/724176
+    ints = [int(s) for s in text.split() if s.isdigit()]
+    if len(ints):
+        return ints[0]
+    else:
+        return None
 
 
 if __name__ == "__main__":
@@ -105,5 +161,7 @@ if __name__ == "__main__":
     print("Save new number for next time:", data['last_number'])
     if not args.test:
         save_yaml(args.yaml, data)
+
+    check_replies(data)
 
 # End of file
