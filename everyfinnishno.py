@@ -15,6 +15,11 @@ HELSINKI_LAT = 60.170833
 HELSINKI_LONG = 24.9375
 
 
+# cmd.exe cannot do Unicode so encode first
+def print_it(text):
+    print(text.encode('utf-8'))
+
+
 def load_yaml(filename):
     """
     File should contain:
@@ -73,7 +78,7 @@ def tweet_it(string, credentials, in_reply_to_status_id=None):
         credentials['consumer_key'],
         credentials['consumer_secret']))
 
-    print("TWEETING THIS:", string)
+    print_it("TWEETING THIS: " + string)
 
     if args.test:
         print("(Test mode, not actually tweeting)")
@@ -112,7 +117,7 @@ def check_replies(credentials):
         print("Found a number:", number)
         if number:
             tweet = build_tweet(number, reply_to=m['user']['screen_name'])
-            print(tweet)
+            # print(tweet)
             tweet_it(tweet, data, in_reply_to_status_id=m['id'])
 
         data['last_mention_id'] = m['id']
