@@ -14,6 +14,8 @@ import yaml
 HELSINKI_LAT = 60.170833
 HELSINKI_LONG = 24.9375
 
+TWITTER = None
+
 
 # cmd.exe cannot do Unicode so encode first
 def print_it(text):
@@ -65,6 +67,7 @@ def build_tweet(number, reply_to=None):
 
 
 def tweet_it(string, credentials, in_reply_to_status_id=None):
+    global TWITTER
     if len(string) <= 0:
         print("ERROR: trying to tweet an empty tweet!")
         return
@@ -72,18 +75,19 @@ def tweet_it(string, credentials, in_reply_to_status_id=None):
     # Create and authorise an app with (read and) write access at:
     # https://dev.twitter.com/apps/new
     # Store credentials in YAML file
-    t = twitter.Twitter(auth=twitter.OAuth(
-        credentials['oauth_token'],
-        credentials['oauth_token_secret'],
-        credentials['consumer_key'],
-        credentials['consumer_secret']))
+    if TWITTER is None:
+        TWITTER = twitter.Twitter(auth=twitter.OAuth(
+            credentials['oauth_token'],
+            credentials['oauth_token_secret'],
+            credentials['consumer_key'],
+            credentials['consumer_secret']))
 
     print_it("TWEETING THIS: " + string)
 
     if args.test:
         print("(Test mode, not actually tweeting)")
     else:
-        result = t.statuses.update(
+        result = TWITTER.statuses.update(
             status=string,
             lat=HELSINKI_LAT, long=HELSINKI_LONG,
             display_coordinates=True,
@@ -96,29 +100,36 @@ def tweet_it(string, credentials, in_reply_to_status_id=None):
 
 
 def check_replies(credentials):
+    global TWITTER
     print("Check replies...")
 #     TODO remove duplicate
-    t = twitter.Twitter(auth=twitter.OAuth(
-        credentials['oauth_token'],
-        credentials['oauth_token_secret'],
-        credentials['consumer_key'],
-        credentials['consumer_secret']))
+    if TWITTER is None:
+        TWITTER = twitter.Twitter(auth=twitter.OAuth(
+            credentials['oauth_token'],
+            credentials['oauth_token_secret'],
+            credentials['consumer_key'],
+            credentials['consumer_secret']))
 
-    mentions = t.statuses.mentions_timeline(since_id=credentials[
-                                            'last_mention_id'])
+    mentions = TWITTER.statuses.mentions_timeline(since_id=credentials[
+                                                  'last_mention_id'])
     for i, m in enumerate(reversed(mentions)):
         print("*"*80)
         print(i)
-        print("text:", m['text'])
+        print_it("text: " + m['text'])
         print("in_reply_to_screen_name:", m['in_reply_to_screen_name'])
         print("screen_name:", m['user']['screen_name'])
         print("ID:", m['id'])
         number = extract_number_from_tweet(m['text'])
         print("Found a number:", number)
         if number:
-            tweet = build_tweet(number, reply_to=m['user']['screen_name'])
-            # print(tweet)
-            tweet_it(tweet, data, in_reply_to_status_id=m['id'])
+            # Does the mention already include the Finnish?
+            # If so, it's probably an edited retweet, so don't reply
+            if fino.to_finnish(number) in m['text']:
+                print("Mention already includes the Finnish, don't reply")
+            else:
+                tweet = build_tweet(number, reply_to=m['user']['screen_name'])
+                # print(tweet)
+                tweet_it(tweet, data, in_reply_to_status_id=m['id'])
 
         data['last_mention_id'] = m['id']
         print("Save last mention ID for next time:", data['last_mention_id'])
