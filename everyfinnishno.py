@@ -121,15 +121,15 @@ def check_replies(credentials):
         print("ID:", m['id'])
         number = extract_number_from_tweet(m['text'])
         print("Found a number:", number)
-        if number:
-            # Does the mention already include the Finnish?
-            # If so, it's probably an edited retweet, so don't reply
-            if fino.to_finnish(number) in m['text']:
-                print("Mention already includes the Finnish, don't reply")
-            else:
-                tweet = build_tweet(number, reply_to=m['user']['screen_name'])
-                # print(tweet)
-                tweet_it(tweet, data, in_reply_to_status_id=m['id'])
+
+        # Does the mention already include the Finnish?
+        # If so, it's probably an edited retweet, so don't reply
+        if fino.to_finnish(number) in m['text']:
+            print("Mention already includes the Finnish, don't reply")
+        else:
+            tweet = build_tweet(number, reply_to=m['user']['screen_name'])
+            # print(tweet)
+            tweet_it(tweet, data, in_reply_to_status_id=m['id'])
 
         data['last_mention_id'] = m['id']
         print("Save last mention ID for next time:", data['last_mention_id'])
@@ -139,11 +139,19 @@ def check_replies(credentials):
 
 
 def extract_number_from_tweet(text):
+    """Return the first positive or negative integer from some text"""
     # Remove commas
     text = text.replace(",", "").rstrip("?")
 
-    # http://stackoverflow.com/a/4289557/724176
-    ints = [int(s) for s in text.split() if s.isdigit()]
+    # http://stackoverflow.com/a/4289415/724176
+    ints = []
+    for t in text.split():
+        try:
+            # print(float(t))
+            ints.append(int(t))
+        except ValueError:
+            pass
+
     if len(ints):
         return ints[0]
     else:
@@ -171,7 +179,12 @@ if __name__ == "__main__":
     tweet = build_tweet(data['last_number'])
 
     # print("Tweet this:\n", tweet)
-    tweet_it(tweet, data)
+    try:
+        tweet_it(tweet, data)
+    except twitter.api.TwitterHTTPError as e:
+        print("*"*80)
+        print(e)
+        print("*"*80)
 
     data['last_number'] += 1
     print("Save new number for next time:", data['last_number'])
