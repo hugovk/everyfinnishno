@@ -122,14 +122,15 @@ def check_replies(credentials):
         number = extract_number_from_tweet(m['text'])
         print("Found a number:", number)
 
-        # Does the mention already include the Finnish?
-        # If so, it's probably an edited retweet, so don't reply
-        if fino.to_finnish(number) in m['text']:
-            print("Mention already includes the Finnish, don't reply")
-        else:
-            tweet = build_tweet(number, reply_to=m['user']['screen_name'])
-            # print(tweet)
-            tweet_it(tweet, data, in_reply_to_status_id=m['id'])
+        if number is not None:
+            # Does the mention already include the Finnish?
+            # If so, it's probably an edited retweet, so don't reply
+            if fino.to_finnish(number) in m['text']:
+                print("Mention already includes the Finnish, don't reply")
+            else:
+                tweet = build_tweet(number, reply_to=m['user']['screen_name'])
+                # print(tweet)
+                tweet_it(tweet, data, in_reply_to_status_id=m['id'])
 
         data['last_mention_id'] = m['id']
         print("Save last mention ID for next time:", data['last_mention_id'])
