@@ -6,13 +6,14 @@ Tweet every Finnish number.
 from __future__ import print_function, unicode_literals
 import argparse
 import fino
+import random
 import sys
 import twitter
 import webbrowser
 import yaml
 
-HELSINKI_LAT = 60.170833
-HELSINKI_LONG = 24.9375
+FINLAND_BBOX = [59.811225, 20.623165, 70.07531, 31.569525]
+
 
 TWITTER = None
 
@@ -49,6 +50,9 @@ def load_yaml(filename):
 
 
 def save_yaml(filename, data):
+    """
+    Save data to filename in YAML format
+    """
     with open(filename, 'w') as yaml_file:
         yaml_file.write(yaml.safe_dump(data, default_flow_style=False))
 
@@ -64,6 +68,14 @@ def build_tweet(number, reply_to=None):
         tweet = tweet[:139] + "…"
 
     return tweet
+
+
+def random_point_in(bbox):
+    """Given a bounding box of (swlat, swlon, nelat, nelon),
+     return random (lat, long)"""
+    lat = random.uniform(bbox[0], bbox[2])
+    long = random.uniform(bbox[1], bbox[3])
+    return (lat, long)
 
 
 def tweet_it(string, credentials, in_reply_to_status_id=None):
@@ -84,12 +96,13 @@ def tweet_it(string, credentials, in_reply_to_status_id=None):
 
     print_it("TWEETING THIS: " + string)
 
+    lat, long = random_point_in(FINLAND_BBOX)
     if args.test:
         print("(Test mode, not actually tweeting)")
     else:
         result = TWITTER.statuses.update(
             status=string,
-            lat=HELSINKI_LAT, long=HELSINKI_LONG,
+            lat=lat, long=long,
             display_coordinates=True,
             in_reply_to_status_id=in_reply_to_status_id)
         url = "http://twitter.com/" + \
