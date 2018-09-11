@@ -9,3 +9,4 @@ And for everyone* who asked: @EveryFinnishNo will do the negative, rational and 
 
  * Follow along and tweet some digits at it! https://twitter.com/EveryFinnishNo
  * Uses https://github.com/hugovk/fino
+ * Archived at https://hugovk.github.io/everyfinnishno/
