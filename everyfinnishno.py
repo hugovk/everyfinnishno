@@ -18,8 +18,8 @@ FINLAND_BBOX = [59.811225, 20.623165, 70.07531, 31.569525]
 TWITTER = None
 
 
-# cmd.exe cannot do Unicode so encode first
 def print_it(text):
+    """cmd.exe cannot do Unicode so encode first"""
     print(text.encode('utf-8'))
 
 
@@ -32,10 +32,11 @@ def load_yaml(filename):
     oauth_token_secret: TODO_ENTER_YOURS
     If it contains last_number or last_mention_id, don't change it
     """
-    f = open(filename)
-    data = yaml.safe_load(f)
-    f.close()
-    if not data.viewkeys() >= {
+    with open(filename) as f:
+        data = yaml.safe_load(f)
+
+    keys = data.viewkeys() if sys.version_info.major == 2 else data.keys()
+    if not keys >= {
             'oauth_token', 'oauth_token_secret',
             'consumer_key', 'consumer_secret'}:
         sys.exit("Twitter credentials missing from YAML: " + filename)
@@ -64,8 +65,8 @@ def build_tweet(number, reply_to=None):
     tweet += str(number) + " " + fino.to_finnish(number)
 
     # Truncate?
-    if len(tweet) > 140:
-        tweet = tweet[:139] + "…"
+    if len(tweet) > 280:
+        tweet = tweet[:280-1] + "…"
 
     return tweet
 
@@ -125,6 +126,7 @@ def check_replies(credentials):
 
     mentions = TWITTER.statuses.mentions_timeline(since_id=credentials[
                                                   'last_mention_id'])
+    print(len(mentions), " mentions found")
     for i, m in enumerate(reversed(mentions)):
         print("*"*80)
         print(i)
