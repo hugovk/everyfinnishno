@@ -223,9 +223,9 @@ if __name__ == "__main__":
 
     data["last_number"] += 1
     print("Save new number for next time:", data["last_number"])
+
     if not args.test:
         save_yaml(args.yaml, data)
-
-    check_replies(data)
+        check_replies(data)
 
 # End of file
