@@ -3,8 +3,6 @@
 """
 Tweet every Finnish number.
 """
-from __future__ import print_function, unicode_literals
-
 import argparse
 import random
 import sys
@@ -20,11 +18,6 @@ FINLAND_BBOX = [59.811225, 20.623165, 70.07531, 31.569525]
 TWITTER = None
 
 
-def print_it(text):
-    """cmd.exe cannot do Unicode so encode first"""
-    print(text.encode("utf-8"))
-
-
 def load_yaml(filename):
     """
     File should contain:
@@ -37,8 +30,7 @@ def load_yaml(filename):
     with open(filename) as f:
         data = yaml.safe_load(f)
 
-    keys = data.viewkeys() if sys.version_info.major == 2 else data.keys()
-    if not keys >= {
+    if not data.keys() >= {
         "oauth_token",
         "oauth_token_secret",
         "consumer_key",
@@ -103,7 +95,7 @@ def tweet_it(string, credentials, in_reply_to_status_id=None):
             )
         )
 
-    print_it("TWEETING THIS: " + string)
+    print("TWEETING THIS: " + string)
 
     lat, long = random_point_in(FINLAND_BBOX)
     if args.test:
@@ -148,7 +140,7 @@ def check_replies(credentials):
     for i, m in enumerate(reversed(mentions)):
         print("*" * 80)
         print(i)
-        print_it("text: " + m["text"])
+        print("text: " + m["text"])
         print("in_reply_to_screen_name:", m["in_reply_to_screen_name"])
         print("screen_name:", m["user"]["screen_name"])
         print("ID:", m["id"])
