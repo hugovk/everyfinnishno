@@ -4,12 +4,14 @@
 Tweet every Finnish number.
 """
 from __future__ import print_function, unicode_literals
+
 import argparse
-import fino
 import random
 import sys
-import twitter
 import webbrowser
+
+import fino
+import twitter
 import yaml
 
 FINLAND_BBOX = [59.811225, 20.623165, 70.07531, 31.569525]
